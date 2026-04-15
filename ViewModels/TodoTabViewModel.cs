@@ -17,7 +17,6 @@ public class TodoTabViewModel : ViewModelBase
         _model = model;
         _name  = model.Name;
 
-        // Load sorted: active items first (original order), then done newest-first
         var sorted = model.Items
             .OrderBy(i => i.IsDone)
             .ThenByDescending(i => i.DoneAt ?? DateTime.MinValue);
@@ -71,14 +70,10 @@ public class TodoTabViewModel : ViewModelBase
 
     private void AddItem()
     {
-        var model = new TodoItem { Text = NewItemText.Trim() };
+        var model    = new TodoItem { Text = NewItemText.Trim() };
         _model.Items.Add(model);
-
-        // New active items insert just before the first done item
         var vm       = CreateVm(model);
-        var insertAt = FirstDoneIndex();
-        Items.Insert(insertAt, vm);
-
+        Items.Insert(FirstDoneIndex(), vm);
         NewItemText = string.Empty;
     }
 
@@ -90,29 +85,70 @@ public class TodoTabViewModel : ViewModelBase
         Items.Remove(item);
     }
 
+    /// <summary>
+    /// Moves a not-done item from <paramref name="fromIndex"/> to
+    /// <paramref name="toIndex"/> within the active section and keeps
+    /// the underlying model list in sync by ID rather than positional index.
+    /// </summary>
+    public void MoveItem(int fromIndex, int toIndex)
+    {
+        var doneStart = FirstDoneIndex();
+
+        // Both indices must be within the active section
+        if (fromIndex < 0 || fromIndex >= doneStart) return;
+        if (toIndex   < 0 || toIndex   >  doneStart) return;
+        if (fromIndex == toIndex) return;
+
+        // ObservableCollection.Move requires a valid index (0..Count-1).
+        // When dropping after the last active item toIndex == doneStart,
+        // so clamp to doneStart-1 when the item is moving forward.
+        var vmTo = toIndex < doneStart ? toIndex : doneStart - 1;
+        Items.Move(fromIndex, vmTo);
+
+        // Sync model list: find by ID so positional mismatch never matters.
+        var draggedModel = Items[vmTo].ToModel();
+        var modelFrom    = _model.Items.FindIndex(m => m.Id == draggedModel.Id);
+
+        // Target model position: ID of the VM that is now at vmTo+1 (the item
+        // that should come after), or append at end of active section.
+        int modelTo;
+        if (vmTo + 1 < doneStart)
+        {
+            var afterId = Items[vmTo + 1].Id;
+            modelTo = _model.Items.FindIndex(m => m.Id == afterId);
+            if (modelTo < 0) modelTo = _model.Items.Count;
+        }
+        else
+        {
+            // Moved to last active slot — find position just before first done model
+            var firstDoneId = Items.FirstOrDefault(i => i.IsDone)?.Id;
+            modelTo = firstDoneId is not null
+                ? _model.Items.FindIndex(m => m.Id == firstDoneId)
+                : _model.Items.Count;
+            if (modelTo < 0) modelTo = _model.Items.Count;
+        }
+
+        if (modelFrom < 0) return;
+
+        _model.Items.RemoveAt(modelFrom);
+
+        // Adjust target if we removed an element before it
+        if (modelFrom < modelTo) modelTo--;
+        modelTo = Math.Clamp(modelTo, 0, _model.Items.Count);
+
+        _model.Items.Insert(modelTo, draggedModel);
+    }
+
     private void ItemViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        // Listen to IsDone — at this point DoneAt is already updated in the VM
         if (e.PropertyName != nameof(TodoItemViewModel.IsDone)) return;
         if (sender is not TodoItemViewModel vm) return;
 
         Items.Remove(vm);
 
-        if (vm.IsDone)
-        {
-            // Insert at the top of the done section (newest first).
-            // Done section starts at FirstDoneIndex(); since this item
-            // is the freshest it goes right at that boundary.
-            Items.Insert(FirstDoneIndex(), vm);
-        }
-        else
-        {
-            // Un-done: move back to the bottom of the active section
-            Items.Insert(FirstDoneIndex(), vm);
-        }
+        Items.Insert(FirstDoneIndex(), vm);
     }
 
-    /// <summary>Returns the index of the first done item, or Count if none.</summary>
     private int FirstDoneIndex() =>
         Items.TakeWhile(i => !i.IsDone).Count();
 

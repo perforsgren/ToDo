@@ -35,7 +35,7 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- Custom Title Bar -->
+            <!-- Title Bar -->
             <Border Grid.Row="0" Background="{StaticResource SurfaceBrush}"
                     CornerRadius="12,12,0,0" Padding="16,10"
                     MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
@@ -44,13 +44,11 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="✅" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
                         <TextBlock Text="ToDo" Foreground="{StaticResource TextBrush}"
                                    FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
                     </StackPanel>
-
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                         <Button Style="{StaticResource IconButton}"
                                 Command="{Binding ToggleAlwaysOnTopCommand}"
@@ -87,9 +85,7 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-
-                    <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                                  VerticalScrollBarVisibility="Disabled">
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                         <ItemsControl ItemsSource="{Binding Tabs}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -98,9 +94,8 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border CornerRadius="8,8,0,0" Padding="10,6"
-                                            Margin="2,4,2,0" Cursor="Hand"
-                                            Background="Transparent"
+                                    <Border CornerRadius="8,8,0,0" Padding="10,6" Margin="2,4,2,0"
+                                            Cursor="Hand" Background="Transparent"
                                             MouseLeftButtonDown="Tab_Click">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="{Binding Name}" FontSize="13"
@@ -110,8 +105,7 @@
                                                        MouseLeftButtonDown="TabName_DoubleClick"/>
                                             <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
                                                      FontSize="13" MinWidth="60" MaxWidth="120"
-                                                     Style="{StaticResource ModernTextBox}"
-                                                     Padding="4,2"
+                                                     Style="{StaticResource ModernTextBox}" Padding="4,2"
                                                      Visibility="{Binding IsRenaming, Converter={StaticResource BoolToVisibility}}"
                                                      LostFocus="TabRename_LostFocus"
                                                      KeyDown="TabRename_KeyDown"/>
@@ -128,7 +122,6 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </ScrollViewer>
-
                     <Button Grid.Column="1" Style="{StaticResource IconButton}"
                             Command="{Binding AddTabCommand}" Margin="4,4,0,0" ToolTip="Add Tab">
                         <TextBlock Text="＋" FontSize="16" FontWeight="Bold"
@@ -137,105 +130,138 @@
                 </Grid>
             </Border>
 
-            <!-- Todo List Content -->
+            <!-- Todo List -->
             <Border Grid.Row="2" Padding="12,8">
                 <Grid DataContext="{Binding SelectedTab}">
-                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,4,0">
-                        <ItemsControl ItemsSource="{Binding Items}" x:Name="ItemsList">
+                    <ScrollViewer x:Name="ItemsScrollViewer"
+                                  VerticalScrollBarVisibility="Auto"
+                                  Padding="0,0,4,0"
+                                  AllowDrop="True"
+                                  DragOver="ItemsList_DragOver"
+                                  Drop="ItemsList_Drop"
+                                  DragLeave="ItemsList_DragLeave">
+                        <ItemsControl x:Name="ItemsList"
+                                      ItemsSource="{Binding Items}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="{StaticResource SurfaceBrush}"
-                                            CornerRadius="10" Margin="0,3" Padding="12,10"
-                                            Opacity="{Binding IsDone, Converter={StaticResource OpacityConverter}}">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <!-- TOP indicator: visible when dropIndex == this item's index -->
+                                        <Border x:Name="DropIndicatorTop"
+                                                Height="2" CornerRadius="1"
+                                                Background="{StaticResource PrimaryBrush}"
+                                                Margin="4,1,4,0"
+                                                Visibility="Collapsed"/>
 
-                                            <!-- Checkbox + done date stacked vertically -->
-                                            <StackPanel Grid.Column="0" VerticalAlignment="Top"
-                                                        Margin="0,2,10,0" HorizontalAlignment="Center">
-                                                <CheckBox Style="{StaticResource RoundCheckBox}"
-                                                          IsChecked="{Binding IsDone}"
-                                                          HorizontalAlignment="Center"/>
-                                                <!-- Done date badge -->
-                                                <TextBlock Text="{Binding DoneAtLabel}"
-                                                           Foreground="{StaticResource SuccessBrush}"
-                                                           FontSize="9.5"
-                                                           FontWeight="SemiBold"
-                                                           HorizontalAlignment="Center"
-                                                           Margin="0,4,0,0"
-                                                           Visibility="{Binding HasDoneAt, Converter={StaticResource BoolToVisibility}}"/>
-                                            </StackPanel>
+                                        <!-- Item card -->
+                                        <Border Background="{StaticResource SurfaceBrush}"
+                                                CornerRadius="10" Margin="0,2" Padding="0,10,12,10"
+                                                Opacity="{Binding IsDone, Converter={StaticResource OpacityConverter}}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
 
-                                            <!-- Display mode -->
-                                            <StackPanel Grid.Column="1" VerticalAlignment="Center"
-                                                        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityInverse}}">
-                                                <TextBlock Text="{Binding Text}"
-                                                           Foreground="{StaticResource TextBrush}"
-                                                           FontSize="14"
-                                                           TextWrapping="Wrap"
-                                                           TextDecorations="{Binding IsDone, Converter={StaticResource StrikeConverter}}"
-                                                           MouseLeftButtonDown="ItemText_DoubleClick"
-                                                           Cursor="Hand"/>
-                                                <TextBlock Text="{Binding Description}"
-                                                           Foreground="{StaticResource TextDimBrush}"
-                                                           FontSize="11.5"
-                                                           TextWrapping="Wrap"
-                                                           Margin="0,3,0,0"
-                                                           MaxHeight="40"
-                                                           TextTrimming="CharacterEllipsis"
-                                                           Visibility="{Binding Description, Converter={StaticResource StringToVisibility}}"
-                                                           MouseLeftButtonDown="ItemText_DoubleClick"
-                                                           Cursor="Hand"/>
-                                            </StackPanel>
+                                                <!-- ⠿ Drag handle — hidden for done items -->
+                                                <Border Grid.Column="0"
+                                                        Style="{StaticResource DragHandleButton}"
+                                                        MouseLeftButtonDown="DragHandle_MouseLeftButtonDown"
+                                                        Visibility="{Binding IsDone, Converter={StaticResource BoolToVisibilityInverse}}"
+                                                        ToolTip="Drag to reorder">
+                                                    <TextBlock Text="⠿"
+                                                               Foreground="{StaticResource TextDimBrush}"
+                                                               FontSize="14"
+                                                               VerticalAlignment="Center"
+                                                               HorizontalAlignment="Center"
+                                                               Opacity="0.45"/>
+                                                </Border>
 
-                                            <!-- Edit mode -->
-                                            <StackPanel Grid.Column="1" VerticalAlignment="Center"
-                                                        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
-                                                <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
-                                                         Style="{StaticResource InlineEditTextBox}"
-                                                         KeyDown="ItemEdit_KeyDown"
-                                                         LostFocus="ItemEdit_LostFocus"
-                                                         Loaded="ItemEditBox_Loaded"/>
-                                                <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
-                                                         Style="{StaticResource DescriptionEditTextBox}"
-                                                         Margin="0,6,0,0"
-                                                         AcceptsReturn="True"
-                                                         TextWrapping="Wrap"
-                                                         MaxHeight="80"
-                                                         VerticalScrollBarVisibility="Auto"
-                                                         KeyDown="DescriptionEdit_KeyDown"
-                                                         LostFocus="ItemEdit_LostFocus"/>
-                                            </StackPanel>
+                                                <!-- Spacer for done items -->
+                                                <Border Grid.Column="0" Width="16"
+                                                        Visibility="{Binding IsDone, Converter={StaticResource BoolToVisibility}}"/>
 
-                                            <!-- Action buttons -->
-                                            <StackPanel Grid.Column="2" Orientation="Horizontal"
-                                                        VerticalAlignment="Top" Margin="4,0,0,0">
-                                                <Button Style="{StaticResource IconButton}"
-                                                        Command="{Binding StartEditCommand}"
-                                                        ToolTip="Edit"
-                                                        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityInverse}}">
-                                                    <TextBlock Text="✏️" FontSize="12"/>
-                                                </Button>
-                                                <Button Style="{StaticResource IconButton}"
-                                                        Command="{Binding FinishEditCommand}"
-                                                        ToolTip="Done editing"
-                                                        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
-                                                    <TextBlock Text="✔" FontSize="13" FontWeight="Bold"
-                                                               Foreground="{StaticResource SuccessBrush}"/>
-                                                </Button>
-                                                <Button Style="{StaticResource IconButton}"
-                                                        Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                        CommandParameter="{Binding}"
-                                                        ToolTip="Delete">
-                                                    <TextBlock Text="🗑" FontSize="12"/>
-                                                </Button>
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
+                                                <!-- Checkbox + done date -->
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Top"
+                                                            Margin="0,2,10,0" HorizontalAlignment="Center">
+                                                    <CheckBox Style="{StaticResource RoundCheckBox}"
+                                                              IsChecked="{Binding IsDone}"
+                                                              HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding DoneAtLabel}"
+                                                               Foreground="{StaticResource SuccessBrush}"
+                                                               FontSize="9.5" FontWeight="SemiBold"
+                                                               HorizontalAlignment="Center"
+                                                               Margin="0,4,0,0"
+                                                               Visibility="{Binding HasDoneAt, Converter={StaticResource BoolToVisibility}}"/>
+                                                </StackPanel>
+
+                                                <!-- Display mode -->
+                                                <StackPanel Grid.Column="2" VerticalAlignment="Center"
+                                                            Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityInverse}}">
+                                                    <TextBlock Text="{Binding Text}"
+                                                               Foreground="{StaticResource TextBrush}"
+                                                               FontSize="14" TextWrapping="Wrap"
+                                                               TextDecorations="{Binding IsDone, Converter={StaticResource StrikeConverter}}"
+                                                               MouseLeftButtonDown="ItemText_DoubleClick"
+                                                               Cursor="Hand"/>
+                                                    <TextBlock Text="{Binding Description}"
+                                                               Foreground="{StaticResource TextDimBrush}"
+                                                               FontSize="11.5" TextWrapping="Wrap"
+                                                               Margin="0,3,0,0" MaxHeight="40"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               Visibility="{Binding Description, Converter={StaticResource StringToVisibility}}"
+                                                               MouseLeftButtonDown="ItemText_DoubleClick"
+                                                               Cursor="Hand"/>
+                                                </StackPanel>
+
+                                                <!-- Edit mode -->
+                                                <StackPanel Grid.Column="2" VerticalAlignment="Center"
+                                                            Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+                                                    <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
+                                                             Style="{StaticResource InlineEditTextBox}"
+                                                             KeyDown="ItemEdit_KeyDown"
+                                                             LostFocus="ItemEdit_LostFocus"
+                                                             Loaded="ItemEditBox_Loaded"/>
+                                                    <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
+                                                             Style="{StaticResource DescriptionEditTextBox}"
+                                                             Margin="0,6,0,0" AcceptsReturn="True"
+                                                             TextWrapping="Wrap" MaxHeight="80"
+                                                             VerticalScrollBarVisibility="Auto"
+                                                             KeyDown="DescriptionEdit_KeyDown"
+                                                             LostFocus="ItemEdit_LostFocus"/>
+                                                </StackPanel>
+
+                                                <!-- Action buttons -->
+                                                <StackPanel Grid.Column="3" Orientation="Horizontal"
+                                                            VerticalAlignment="Top" Margin="4,0,0,0">
+                                                    <Button Style="{StaticResource IconButton}"
+                                                            Command="{Binding StartEditCommand}" ToolTip="Edit"
+                                                            Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityInverse}}">
+                                                        <TextBlock Text="✏️" FontSize="12"/>
+                                                    </Button>
+                                                    <Button Style="{StaticResource IconButton}"
+                                                            Command="{Binding FinishEditCommand}" ToolTip="Done editing"
+                                                            Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+                                                        <TextBlock Text="✔" FontSize="13" FontWeight="Bold"
+                                                                   Foreground="{StaticResource SuccessBrush}"/>
+                                                    </Button>
+                                                    <Button Style="{StaticResource IconButton}"
+                                                            Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}" ToolTip="Delete">
+                                                        <TextBlock Text="🗑" FontSize="12"/>
+                                                    </Button>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+
+                                        <!-- BOTTOM indicator: visible when dropIndex == this item's index + 1 -->
+                                        <Border x:Name="DropIndicatorBottom"
+                                                Height="2" CornerRadius="1"
+                                                Background="{StaticResource PrimaryBrush}"
+                                                Margin="4,0,4,1"
+                                                Visibility="Collapsed"/>
+                                    </StackPanel>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
@@ -261,15 +287,11 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-
                     <TextBox Grid.Column="0"
                              Style="{StaticResource ModernTextBox}"
                              Text="{Binding NewItemText, UpdateSourceTrigger=PropertyChanged}"
-                             KeyDown="NewItem_KeyDown"
-                             Margin="0,0,8,0"/>
-
-                    <Button Grid.Column="1"
-                            Style="{StaticResource ModernButton}"
+                             KeyDown="NewItem_KeyDown" Margin="0,0,8,0"/>
+                    <Button Grid.Column="1" Style="{StaticResource ModernButton}"
                             Command="{Binding AddItemCommand}"
                             Content="Add" Padding="20,10"/>
                 </Grid>
