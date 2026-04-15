@@ -148,95 +148,92 @@
                                             CornerRadius="10" Margin="0,3" Padding="12,10"
                                             Opacity="{Binding IsDone, Converter={StaticResource OpacityConverter}}">
                                         <Grid>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto"/>
-                                                <RowDefinition Height="Auto"/>
-                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
 
-                                            <!-- Main row: checkbox + text + actions -->
-                                            <Grid Grid.Row="0">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-
-                                                <CheckBox Grid.Column="0"
-                                                          Style="{StaticResource RoundCheckBox}"
+                                            <!-- Checkbox + done date stacked vertically -->
+                                            <StackPanel Grid.Column="0" VerticalAlignment="Top"
+                                                        Margin="0,2,10,0" HorizontalAlignment="Center">
+                                                <CheckBox Style="{StaticResource RoundCheckBox}"
                                                           IsChecked="{Binding IsDone}"
-                                                          VerticalAlignment="Top"
-                                                          Margin="0,2,10,0"/>
+                                                          HorizontalAlignment="Center"/>
+                                                <!-- Done date badge -->
+                                                <TextBlock Text="{Binding DoneAtLabel}"
+                                                           Foreground="{StaticResource SuccessBrush}"
+                                                           FontSize="9.5"
+                                                           FontWeight="SemiBold"
+                                                           HorizontalAlignment="Center"
+                                                           Margin="0,4,0,0"
+                                                           Visibility="{Binding HasDoneAt, Converter={StaticResource BoolToVisibility}}"/>
+                                            </StackPanel>
 
-                                                <!-- Display mode -->
-                                                <StackPanel Grid.Column="1" VerticalAlignment="Center"
-                                                            Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityInverse}}">
-                                                    <TextBlock Text="{Binding Text}"
-                                                               Foreground="{StaticResource TextBrush}"
-                                                               FontSize="14"
-                                                               TextWrapping="Wrap"
-                                                               TextDecorations="{Binding IsDone, Converter={StaticResource StrikeConverter}}"
-                                                               MouseLeftButtonDown="ItemText_DoubleClick"
-                                                               Cursor="Hand"/>
-                                                    <!-- Description preview (non-edit) -->
-                                                    <TextBlock Text="{Binding Description}"
-                                                               Foreground="{StaticResource TextDimBrush}"
-                                                               FontSize="11.5"
-                                                               TextWrapping="Wrap"
-                                                               Margin="0,3,0,0"
-                                                               MaxHeight="40"
-                                                               TextTrimming="CharacterEllipsis"
-                                                               Visibility="{Binding Description, Converter={StaticResource StringToVisibility}}"
-                                                               MouseLeftButtonDown="ItemText_DoubleClick"
-                                                               Cursor="Hand"/>
-                                                </StackPanel>
+                                            <!-- Display mode -->
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center"
+                                                        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityInverse}}">
+                                                <TextBlock Text="{Binding Text}"
+                                                           Foreground="{StaticResource TextBrush}"
+                                                           FontSize="14"
+                                                           TextWrapping="Wrap"
+                                                           TextDecorations="{Binding IsDone, Converter={StaticResource StrikeConverter}}"
+                                                           MouseLeftButtonDown="ItemText_DoubleClick"
+                                                           Cursor="Hand"/>
+                                                <TextBlock Text="{Binding Description}"
+                                                           Foreground="{StaticResource TextDimBrush}"
+                                                           FontSize="11.5"
+                                                           TextWrapping="Wrap"
+                                                           Margin="0,3,0,0"
+                                                           MaxHeight="40"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           Visibility="{Binding Description, Converter={StaticResource StringToVisibility}}"
+                                                           MouseLeftButtonDown="ItemText_DoubleClick"
+                                                           Cursor="Hand"/>
+                                            </StackPanel>
 
-                                                <!-- Edit mode -->
-                                                <StackPanel Grid.Column="1" VerticalAlignment="Center"
-                                                            Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
-                                                    <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
-                                                             Style="{StaticResource InlineEditTextBox}"
-                                                             KeyDown="ItemEdit_KeyDown"
-                                                             LostFocus="ItemEdit_LostFocus"
-                                                             Loaded="ItemEditBox_Loaded"/>
-                                                    <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
-                                                             Style="{StaticResource DescriptionEditTextBox}"
-                                                             Margin="0,6,0,0"
-                                                             AcceptsReturn="True"
-                                                             TextWrapping="Wrap"
-                                                             MaxHeight="80"
-                                                             VerticalScrollBarVisibility="Auto"
-                                                             KeyDown="DescriptionEdit_KeyDown"
-                                                             LostFocus="ItemEdit_LostFocus"
-                                                             Tag="Add details..."/>
-                                                </StackPanel>
+                                            <!-- Edit mode -->
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center"
+                                                        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+                                                <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource InlineEditTextBox}"
+                                                         KeyDown="ItemEdit_KeyDown"
+                                                         LostFocus="ItemEdit_LostFocus"
+                                                         Loaded="ItemEditBox_Loaded"/>
+                                                <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource DescriptionEditTextBox}"
+                                                         Margin="0,6,0,0"
+                                                         AcceptsReturn="True"
+                                                         TextWrapping="Wrap"
+                                                         MaxHeight="80"
+                                                         VerticalScrollBarVisibility="Auto"
+                                                         KeyDown="DescriptionEdit_KeyDown"
+                                                         LostFocus="ItemEdit_LostFocus"/>
+                                            </StackPanel>
 
-                                                <!-- Action buttons -->
-                                                <StackPanel Grid.Column="2" Orientation="Horizontal"
-                                                            VerticalAlignment="Top" Margin="4,0,0,0">
-                                                    <!-- Edit button (only in view mode) -->
-                                                    <Button Style="{StaticResource IconButton}"
-                                                            Command="{Binding StartEditCommand}"
-                                                            ToolTip="Edit"
-                                                            Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityInverse}}">
-                                                        <TextBlock Text="✏️" FontSize="12"/>
-                                                    </Button>
-                                                    <!-- Done editing (only in edit mode) -->
-                                                    <Button Style="{StaticResource IconButton}"
-                                                            Command="{Binding FinishEditCommand}"
-                                                            ToolTip="Done editing"
-                                                            Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
-                                                        <TextBlock Text="✔" FontSize="13" FontWeight="Bold"
-                                                                   Foreground="{StaticResource SuccessBrush}"/>
-                                                    </Button>
-                                                    <!-- Delete -->
-                                                    <Button Style="{StaticResource IconButton}"
-                                                            Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                            CommandParameter="{Binding}"
-                                                            ToolTip="Delete">
-                                                        <TextBlock Text="🗑" FontSize="12"/>
-                                                    </Button>
-                                                </StackPanel>
-                                            </Grid>
+                                            <!-- Action buttons -->
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                                        VerticalAlignment="Top" Margin="4,0,0,0">
+                                                <Button Style="{StaticResource IconButton}"
+                                                        Command="{Binding StartEditCommand}"
+                                                        ToolTip="Edit"
+                                                        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityInverse}}">
+                                                    <TextBlock Text="✏️" FontSize="12"/>
+                                                </Button>
+                                                <Button Style="{StaticResource IconButton}"
+                                                        Command="{Binding FinishEditCommand}"
+                                                        ToolTip="Done editing"
+                                                        Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+                                                    <TextBlock Text="✔" FontSize="13" FontWeight="Bold"
+                                                               Foreground="{StaticResource SuccessBrush}"/>
+                                                </Button>
+                                                <Button Style="{StaticResource IconButton}"
+                                                        Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"
+                                                        ToolTip="Delete">
+                                                    <TextBlock Text="🗑" FontSize="12"/>
+                                                </Button>
+                                            </StackPanel>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>

@@ -11,16 +11,18 @@ public class TodoItemViewModel : ViewModelBase
     private string _description;
     private bool _isEditing;
     private bool _isExpanded;
+    private DateTime? _doneAt;
 
     public TodoItemViewModel(TodoItem model)
     {
-        _model = model;
-        _isDone = model.IsDone;
-        _text = model.Text;
+        _model       = model;
+        _isDone      = model.IsDone;
+        _text        = model.Text;
         _description = model.Description;
+        _doneAt      = model.DoneAt;
 
-        StartEditCommand = new RelayCommand(_ => IsEditing = true);
-        FinishEditCommand = new RelayCommand(_ => IsEditing = false);
+        StartEditCommand    = new RelayCommand(_ => IsEditing = true);
+        FinishEditCommand   = new RelayCommand(_ => IsEditing = false);
         ToggleExpandCommand = new RelayCommand(_ => IsExpanded = !IsExpanded);
     }
 
@@ -31,10 +33,25 @@ public class TodoItemViewModel : ViewModelBase
         get => _isDone;
         set
         {
-            if (SetProperty(ref _isDone, value))
-                _model.IsDone = value;
+            if (!SetProperty(ref _isDone, value)) return;
+            _model.IsDone = value;
+
+            // Update DoneAt first — then notify IsDone so listeners
+            // see the final DoneAt value when they react to IsDone changing.
+            _doneAt       = value ? DateTime.Now : null;
+            _model.DoneAt = _doneAt;
+
+            OnPropertyChanged(nameof(DoneAt));
+            OnPropertyChanged(nameof(DoneAtLabel));
+            OnPropertyChanged(nameof(HasDoneAt));
+            // Fire IsDone last so TabViewModel sees correct DoneAt
+            OnPropertyChanged(nameof(IsDone));
         }
     }
+
+    public DateTime? DoneAt  => _doneAt;
+    public string DoneAtLabel => _doneAt?.ToString("yyyy-MM-dd") ?? string.Empty;
+    public bool HasDoneAt     => _doneAt.HasValue && _isDone;
 
     public string Text
     {
@@ -73,8 +90,8 @@ public class TodoItemViewModel : ViewModelBase
         set => SetProperty(ref _isExpanded, value);
     }
 
-    public ICommand StartEditCommand { get; }
-    public ICommand FinishEditCommand { get; }
+    public ICommand StartEditCommand    { get; }
+    public ICommand FinishEditCommand   { get; }
     public ICommand ToggleExpandCommand { get; }
 
     public TodoItem ToModel() => _model;
