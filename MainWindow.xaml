@@ -1,0 +1,282 @@
+﻿<Window x:Class="ToDo.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ToDo"
+        xmlns:converters="clr-namespace:ToDo.Converters"
+        xmlns:vm="clr-namespace:ToDo.ViewModels"
+        mc:Ignorable="d"
+        Title="✅ ToDo"
+        Height="600" Width="400"
+        MinHeight="350" MinWidth="320"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="CanResizeWithGrip"
+        Topmost="{Binding IsAlwaysOnTop}"
+        d:DataContext="{d:DesignInstance Type=vm:MainViewModel}">
+
+    <Window.Resources>
+        <converters:BoolToTextDecorationConverter x:Key="StrikeConverter"/>
+        <converters:BoolToOpacityConverter x:Key="OpacityConverter"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibility"/>
+        <converters:BoolToVisibilityInverseConverter x:Key="BoolToVisibilityInverse"/>
+        <converters:StringToVisibilityConverter x:Key="StringToVisibility"/>
+    </Window.Resources>
+
+    <Border Background="{StaticResource BgBrush}" CornerRadius="12"
+            BorderBrush="{StaticResource SurfaceLightBrush}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Custom Title Bar -->
+            <Border Grid.Row="0" Background="{StaticResource SurfaceBrush}"
+                    CornerRadius="12,12,0,0" Padding="16,10"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="✅" FontSize="16" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="ToDo" Foreground="{StaticResource TextBrush}"
+                                   FontSize="15" FontWeight="Bold" VerticalAlignment="Center"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Style="{StaticResource IconButton}"
+                                Command="{Binding ToggleAlwaysOnTopCommand}"
+                                ToolTip="Toggle Always on Top" Margin="0,0,4,0">
+                            <TextBlock Text="📌" FontSize="13">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{StaticResource TextDimBrush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsAlwaysOnTop}" Value="True">
+                                                <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Button>
+                        <Button Style="{StaticResource IconButton}" Click="Minimize_Click" ToolTip="Minimize">
+                            <TextBlock Text="—" FontSize="12" FontWeight="Bold"
+                                       Foreground="{StaticResource TextDimBrush}"/>
+                        </Button>
+                        <Button Style="{StaticResource IconButton}" Click="Close_Click" ToolTip="Close">
+                            <TextBlock Text="✕" FontSize="13" FontWeight="Bold"
+                                       Foreground="{StaticResource TextDimBrush}"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Tab Header Row -->
+            <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}" Padding="8,0,8,0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                                  VerticalScrollBarVisibility="Disabled">
+                        <ItemsControl ItemsSource="{Binding Tabs}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border CornerRadius="8,8,0,0" Padding="10,6"
+                                            Margin="2,4,2,0" Cursor="Hand"
+                                            Background="Transparent"
+                                            MouseLeftButtonDown="Tab_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Name}" FontSize="13"
+                                                       Foreground="{StaticResource TextDimBrush}"
+                                                       VerticalAlignment="Center"
+                                                       Visibility="{Binding IsRenaming, Converter={StaticResource BoolToVisibilityInverse}}"
+                                                       MouseLeftButtonDown="TabName_DoubleClick"/>
+                                            <TextBox Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                                                     FontSize="13" MinWidth="60" MaxWidth="120"
+                                                     Style="{StaticResource ModernTextBox}"
+                                                     Padding="4,2"
+                                                     Visibility="{Binding IsRenaming, Converter={StaticResource BoolToVisibility}}"
+                                                     LostFocus="TabRename_LostFocus"
+                                                     KeyDown="TabRename_KeyDown"/>
+                                            <Button Style="{StaticResource IconButton}"
+                                                    Width="20" Height="20" Margin="4,0,0,0"
+                                                    Command="{Binding DataContext.RemoveTabCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}">
+                                                <TextBlock Text="✕" FontSize="10"
+                                                           Foreground="{StaticResource TextDimBrush}"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <Button Grid.Column="1" Style="{StaticResource IconButton}"
+                            Command="{Binding AddTabCommand}" Margin="4,4,0,0" ToolTip="Add Tab">
+                        <TextBlock Text="＋" FontSize="16" FontWeight="Bold"
+                                   Foreground="{StaticResource PrimaryBrush}"/>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Todo List Content -->
+            <Border Grid.Row="2" Padding="12,8">
+                <Grid DataContext="{Binding SelectedTab}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,4,0">
+                        <ItemsControl ItemsSource="{Binding Items}" x:Name="ItemsList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource SurfaceBrush}"
+                                            CornerRadius="10" Margin="0,3" Padding="12,10"
+                                            Opacity="{Binding IsDone, Converter={StaticResource OpacityConverter}}">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <!-- Main row: checkbox + text + actions -->
+                                            <Grid Grid.Row="0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <CheckBox Grid.Column="0"
+                                                          Style="{StaticResource RoundCheckBox}"
+                                                          IsChecked="{Binding IsDone}"
+                                                          VerticalAlignment="Top"
+                                                          Margin="0,2,10,0"/>
+
+                                                <!-- Display mode -->
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center"
+                                                            Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityInverse}}">
+                                                    <TextBlock Text="{Binding Text}"
+                                                               Foreground="{StaticResource TextBrush}"
+                                                               FontSize="14"
+                                                               TextWrapping="Wrap"
+                                                               TextDecorations="{Binding IsDone, Converter={StaticResource StrikeConverter}}"
+                                                               MouseLeftButtonDown="ItemText_DoubleClick"
+                                                               Cursor="Hand"/>
+                                                    <!-- Description preview (non-edit) -->
+                                                    <TextBlock Text="{Binding Description}"
+                                                               Foreground="{StaticResource TextDimBrush}"
+                                                               FontSize="11.5"
+                                                               TextWrapping="Wrap"
+                                                               Margin="0,3,0,0"
+                                                               MaxHeight="40"
+                                                               TextTrimming="CharacterEllipsis"
+                                                               Visibility="{Binding Description, Converter={StaticResource StringToVisibility}}"
+                                                               MouseLeftButtonDown="ItemText_DoubleClick"
+                                                               Cursor="Hand"/>
+                                                </StackPanel>
+
+                                                <!-- Edit mode -->
+                                                <StackPanel Grid.Column="1" VerticalAlignment="Center"
+                                                            Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+                                                    <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}"
+                                                             Style="{StaticResource InlineEditTextBox}"
+                                                             KeyDown="ItemEdit_KeyDown"
+                                                             LostFocus="ItemEdit_LostFocus"
+                                                             Loaded="ItemEditBox_Loaded"/>
+                                                    <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
+                                                             Style="{StaticResource DescriptionEditTextBox}"
+                                                             Margin="0,6,0,0"
+                                                             AcceptsReturn="True"
+                                                             TextWrapping="Wrap"
+                                                             MaxHeight="80"
+                                                             VerticalScrollBarVisibility="Auto"
+                                                             KeyDown="DescriptionEdit_KeyDown"
+                                                             LostFocus="ItemEdit_LostFocus"
+                                                             Tag="Add details..."/>
+                                                </StackPanel>
+
+                                                <!-- Action buttons -->
+                                                <StackPanel Grid.Column="2" Orientation="Horizontal"
+                                                            VerticalAlignment="Top" Margin="4,0,0,0">
+                                                    <!-- Edit button (only in view mode) -->
+                                                    <Button Style="{StaticResource IconButton}"
+                                                            Command="{Binding StartEditCommand}"
+                                                            ToolTip="Edit"
+                                                            Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibilityInverse}}">
+                                                        <TextBlock Text="✏️" FontSize="12"/>
+                                                    </Button>
+                                                    <!-- Done editing (only in edit mode) -->
+                                                    <Button Style="{StaticResource IconButton}"
+                                                            Command="{Binding FinishEditCommand}"
+                                                            ToolTip="Done editing"
+                                                            Visibility="{Binding IsEditing, Converter={StaticResource BoolToVisibility}}">
+                                                        <TextBlock Text="✔" FontSize="13" FontWeight="Bold"
+                                                                   Foreground="{StaticResource SuccessBrush}"/>
+                                                    </Button>
+                                                    <!-- Delete -->
+                                                    <Button Style="{StaticResource IconButton}"
+                                                            Command="{Binding DataContext.RemoveItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}"
+                                                            ToolTip="Delete">
+                                                        <TextBlock Text="🗑" FontSize="12"/>
+                                                    </Button>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <!-- Empty State -->
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                Visibility="{Binding Items.Count, Converter={x:Static local:CountToVisibilityConverter.Instance}}">
+                        <TextBlock Text="📝" FontSize="40" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+                        <TextBlock Text="No tasks yet" Foreground="{StaticResource TextDimBrush}"
+                                   FontSize="15" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Add your first task below" Foreground="{StaticResource TextDimBrush}"
+                                   FontSize="12" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Add Item Bar -->
+            <Border Grid.Row="3" Background="{StaticResource SurfaceBrush}"
+                    CornerRadius="0,0,12,12" Padding="12,10">
+                <Grid DataContext="{Binding SelectedTab}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBox Grid.Column="0"
+                             Style="{StaticResource ModernTextBox}"
+                             Text="{Binding NewItemText, UpdateSourceTrigger=PropertyChanged}"
+                             KeyDown="NewItem_KeyDown"
+                             Margin="0,0,8,0"/>
+
+                    <Button Grid.Column="1"
+                            Style="{StaticResource ModernButton}"
+                            Command="{Binding AddItemCommand}"
+                            Content="Add" Padding="20,10"/>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>
